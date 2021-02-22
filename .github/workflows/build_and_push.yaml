@@ -2,10 +2,7 @@ name: 'Deploy'
 on:
   push:
     branches:
-      - 'dev'
-      - 'release/*'
-    tags:
-      - '*'
+      - 'main'
 env:
   ECR_REPOSITORY: 'ddc-data-viewer'
   IMAGE_TAG: 'latest'
