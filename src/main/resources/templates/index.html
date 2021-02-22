@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <title>DDC Data Viewer</title>
+    <style>
+        .container {
+            max-width: 960px;
+        }
+
+        .timeline {
+            max-width: 960px;
+            margin: auto;
+        }
+
+        .timeline-event {
+            border-top: 2px dashed;
+            border-color: blue !important;
+            margin: 0;
+            padding: 30px;
+            text-overflow: ellipsis;
+        }
+
+        .timeline-event:first-child {
+            border-top: 0;
+            border-top-right-radius: 0;
+            border-top-left-radius: 0;
+        }
+
+        .timeline-event:last-child {
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <main>
+        <div class="py-5 text-center">
+            <h2>DDC Data Viewer</h2>
+        </div>
+        <div class="row g-3">
+            <div class="mb-3">
+                <label for="account-pk" class="form-label">Account Public Key</label>
+                <input type="text" class="form-control" id="account-pk"
+                       placeholder="0x0d24186eb41ee244e570679c2489c62ad9a5659c643a17e4a03f04643b95a6c5"
+                       value="0x1">
+            </div>
+            <div class="mb-3">
+                <label for="app-pk" class="form-label">Application Public Key</label>
+                <input type="text" class="form-control" id="app-pk"
+                       placeholder="0x07cc3fc4cd55db6944b12d2de2c80be06999d52c82986d51dc12098db1d07f3e"
+                       value="0x8f01969eb5244d853cc9c6ad73c46d8a1a091842c414cabd2377531f0832635f">
+            </div>
+            <div class="mb-3">
+                <button type="button" class="btn btn-primary mb-3" id="submit-btn">View</button>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="timeline" id="timeline">
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function byId(id) {
+        return document.getElementById(id);
+    }
+
+    function val(id) {
+        return byId(id).value;
+    }
+
+    byId('submit-btn').onclick = function () {
+        const account = val('account-pk');
+        const app = val('app-pk');
+        const url = '/data?userPubKey=' + account + '&appPubKey=' + app;
+        const timeline = byId('timeline');
+        timeline.innerHTML = '';
+        fetch(url)
+            .then(response => response.json())
+            .then(data => data.forEach(t => {
+                const event = document.createElement('p')
+                event.innerText = JSON.stringify(t, null, 2);
+                event.className = 'timeline-event';
+                timeline.appendChild(event);
+            }));
+    }
+</script>
+</body>
+</html>

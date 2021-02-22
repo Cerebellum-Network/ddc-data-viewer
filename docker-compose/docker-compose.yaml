@@ -1,0 +1,59 @@
+version: "3"
+
+services:
+  blockchain-mock:
+    container_name: 'blockchain-mock'
+    image: nginx:1.16-alpine
+    volumes:
+      - ./blockchain-mock-nginx.conf:/etc/nginx/nginx.conf
+
+  ddc-bootnode:
+    container_name: 'ddc-bootnode'
+    image: '524725240689.dkr.ecr.us-west-2.amazonaws.com/ddc-node:v0.5.0'
+    environment:
+      - 'HTTP_PORT=8880'
+      - 'REMOTE_HTTP_ADDR=http://localhost:8880'
+      - 'P2P_LISTEN_ADDR=/dns4/ddc-bootnode/tcp/5000'
+      - 'LOG_LEVEL=debug'
+      - 'BLOCKCHAIN_URL=http://blockchain-mock:9000'
+    ports:
+      - '5000:5000'
+      - '8880:8880'
+    volumes:
+      - ./bootnode-p2p-config.json:/data/p2p-config.json
+    depends_on:
+      - 'blockchain-mock'
+  ddc-node-1:
+    container_name: 'ddc-node-1'
+    image: '524725240689.dkr.ecr.us-west-2.amazonaws.com/ddc-node:v0.5.0'
+    environment:
+      - 'HTTP_PORT=8881'
+      - 'REMOTE_HTTP_ADDR=http://localhost:8881'
+      - 'P2P_LISTEN_ADDR=/dns4/ddc-node-1/tcp/5001'
+      - 'P2P_BOOTNODES=/dns4/ddc-bootnode/tcp/5000/p2p/12D3KooWFRkkd4ycCPYEmeBzgfkrMrVSHWe6sYdgPo1JyAdLM4mT'
+      - 'LOG_LEVEL=debug'
+      - 'BLOCKCHAIN_URL=http://blockchain-mock:9000'
+    ports:
+      - '5001:5001'
+      - '8881:8881'
+    volumes:
+      - ./node-1-p2p-config.json:/data/p2p-config.json
+    depends_on:
+      - 'ddc-bootnode'
+  ddc-node-2:
+    container_name: 'ddc-node-2'
+    image: '524725240689.dkr.ecr.us-west-2.amazonaws.com/ddc-node:v0.5.0'
+    environment:
+      - 'HTTP_PORT=8882'
+      - 'REMOTE_HTTP_ADDR=http://localhost:8882'
+      - 'P2P_LISTEN_ADDR=/dns4/ddc-node-2/tcp/5002'
+      - 'P2P_BOOTNODES=/dns4/ddc-bootnode/tcp/5000/p2p/12D3KooWFRkkd4ycCPYEmeBzgfkrMrVSHWe6sYdgPo1JyAdLM4mT'
+      - 'LOG_LEVEL=debug'
+      - 'BLOCKCHAIN_URL=http://blockchain-mock:9000'
+    ports:
+      - '5002:5002'
+      - '8882:8882'
+    volumes:
+      - ./node-2-p2p-config.json:/data/p2p-config.json
+    depends_on:
+      - 'ddc-bootnode'

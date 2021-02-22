@@ -1,0 +1,55 @@
+name: 'Deploy'
+on:
+  push:
+    branches:
+      - 'dev'
+      - 'release/*'
+    tags:
+      - '*'
+env:
+  ECR_REPOSITORY: 'ddc-data-viewer'
+  IMAGE_TAG: 'latest'
+jobs:
+  build-and-push:
+    runs-on: 'ubuntu-latest'
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v1'
+      - name: 'Set up Java'
+        uses: 'actions/setup-java@v1'
+        with:
+          java-version: '11'
+      - name: 'Cache build .gradle dir'
+        uses: 'actions/cache@v1'
+        with:
+          path: '.gradle'
+          key: "${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle.kts') }}"
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: 'Cache user .gradle dir'
+        uses: 'actions/cache@v1'
+        with:
+          path: '~/.gradle'
+          key: "${{ runner.os }}-gradleuser-${{ hashFiles('**/build.gradle.kts') }}"
+          restore-keys: |
+            ${{ runner.os }}-gradleuser-
+      - name: 'Configure AWS credentials'
+        uses: 'aws-actions/configure-aws-credentials@v1'
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'us-west-2'
+      - name: 'Login to Amazon ECR'
+        id: 'login-ecr'
+        uses: 'aws-actions/amazon-ecr-login@v1'
+      - name: 'Build and push image'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          ./gradlew buildNative \
+            -Dquarkus.container-image.group=$ECR_REGISTRY \
+            -Dquarkus.container-image.name=$ECR_REPOSITORY \
+            -Dquarkus.container-image.tag=$IMAGE_TAG \
+            -i
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

@@ -1,0 +1,32 @@
+quarkus:
+  log:
+    min-level: 'DEBUG'
+    console:
+      enable: true
+      level: 'INFO'
+      json: false
+    category:
+      network.cere:
+        level: ${LOG_LEVEL:INFO}
+  # Build section
+  package:
+    type: 'native'
+  container-image:
+    build: true
+    push: false
+    group: 'cere'
+    name: 'ddc-data-viewer'
+    tag: 'dev'
+ddc-bootnode: 'http://ddc-bootnode:8080'
+
+"%prod":
+  quarkus:
+    log:
+      console:
+        json: true
+
+"%test":
+  ddc-bootnode: 'http://localhost:8880'
+
+"%dev":
+  ddc-bootnode: 'http://localhost:8880'
