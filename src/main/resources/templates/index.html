@@ -11,28 +11,39 @@
             max-width: 960px;
         }
 
-        .timeline {
-            max-width: 960px;
-            margin: auto;
+        ul.timeline {
+            list-style-type: none;
+            position: relative;
         }
 
-        .timeline-event {
-            border-top: 2px dashed;
-            border-color: blue !important;
-            margin: 0;
-            padding: 30px;
-            text-overflow: ellipsis;
+        ul.timeline:before {
+            content: ' ';
+            background: #d4d9df;
+            display: inline-block;
+            position: absolute;
+            left: 29px;
+            width: 2px;
+            height: 100%;
+            z-index: 400;
         }
 
-        .timeline-event:first-child {
-            border-top: 0;
-            border-top-right-radius: 0;
-            border-top-left-radius: 0;
+        ul.timeline > li {
+            margin: 20px 0;
+            padding-left: 20px;
+            overflow-wrap: break-word;
         }
 
-        .timeline-event:last-child {
-            border-bottom-right-radius: 0;
-            border-bottom-left-radius: 0;
+        ul.timeline > li:before {
+            content: ' ';
+            background: white;
+            display: inline-block;
+            position: absolute;
+            border-radius: 50%;
+            border: 3px solid #22c0e8;
+            left: 20px;
+            width: 20px;
+            height: 20px;
+            z-index: 400;
         }
     </style>
 </head>
@@ -56,17 +67,33 @@
                        value="0x07cc3fc4cd55db6944b12d2de2c80be06999d52c82986d51dc12098db1d07f3e">
             </div>
             <div class="mb-3">
+                <label for="enc-key" class="form-label">Encryption Master Key</label>
+                <input type="text" class="form-control" id="enc-key"
+                       placeholder="0000000000000000000000000000000000000000000000000000000000000000"
+                       value="0000000000000000000000000000000000000000000000000000000000000000">
+            </div>
+            <div class="mb-3">
                 <button type="button" class="btn btn-primary mb-3" id="submit-btn">View</button>
             </div>
         </div>
         <div class="row g-3">
-            <div class="timeline" id="timeline">
+            <div class="col">
+                <ul class="timeline" id="timeline"></ul>
             </div>
         </div>
     </main>
 </div>
 
 <script>
+    const dateFormatOpts = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+    };
+
     function byId(id) {
         return document.getElementById(id);
     }
@@ -78,15 +105,44 @@
     byId('submit-btn').onclick = function () {
         const account = val('account-pk');
         const app = val('app-pk');
+        const encKey = val('enc-key');
         const url = '/data?userPubKey=' + account + '&appPubKey=' + app;
         const timeline = byId('timeline');
         timeline.innerHTML = '';
         fetch(url)
             .then(response => response.json())
             .then(data => data.forEach(t => {
-                const event = document.createElement('p')
-                event.innerText = JSON.stringify(t, null, 2);
-                event.className = 'timeline-event';
+                const eventDate = document.createElement('span');
+                eventDate.className = 'badge rounded-pill bg-info text-dark';
+                eventDate.innerText = new Date(t.timestamp).toLocaleDateString('en-US', dateFormatOpts);
+
+                const eventJson = document.createElement('p');
+                eventJson.innerText = t.data;
+
+                const decryptBtn = document.createElement('button');
+                decryptBtn.type = 'button';
+                decryptBtn.className = 'btn btn-outline-success btn-sm float-end';
+                decryptBtn.innerText = 'Decrypt';
+                decryptBtn.onclick = function () {
+                    fetch('/decrypt', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json;charset=utf-8'
+                        },
+                        body: JSON.stringify({
+                            data: t.data,
+                            key: encKey
+                        })
+                    })
+                        .then(response => response.text())
+                        .then(data => eventJson.innerText = data)
+                }
+
+                const event = document.createElement('li');
+                event.appendChild(eventDate);
+                event.appendChild(decryptBtn);
+                event.appendChild(eventJson);
+
                 timeline.appendChild(event);
             }));
     }

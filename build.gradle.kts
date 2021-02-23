@@ -29,6 +29,10 @@ dependencies {
     implementation("io.quarkus:quarkus-vertx")
     implementation("io.smallrye.reactive:smallrye-mutiny-vertx-web-client")
 
+    // Crypto
+    implementation("com.rfksystems:blake2b:1.0.0")
+    implementation("com.google.crypto.tink:tink:1.5.0")
+
     // Logging
     implementation("io.quarkus:quarkus-logging-json")
 
