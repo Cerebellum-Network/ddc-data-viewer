@@ -13,7 +13,7 @@ internal class DecrypterTest {
         val key = "0000000000000000000000000000000000000000000000000000000000000000"
         assertEquals(
             """{"event_type":"UPDATE_USER_STATE_CUSTOM_FIELDS","account_id":"0x0d24186eb41ee244e570679c2489c62ad9a5659c643a17e4a03f04643b95a6c5","session_id":"7b530fc0-71c1-11eb-b6f4-d55aad704f2c","signature":"STUB_SIGNATURE","payload":{"points":2280},"app_id":"242","generated":false,"id":"9c1a68f0-71c3-11eb-b609-89b7e55b27fb","timestamp":"2021-02-18T08:30:51.647Z","is_debug":false}""",
-            testSubject.decrypt(data, key)
+            testSubject.decrypt(data, key).encode()
         )
     }
 }
