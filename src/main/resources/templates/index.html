@@ -135,7 +135,10 @@
                         })
                     })
                         .then(response => response.text())
-                        .then(data => eventJson.innerText = data)
+                        .then(data => {
+                            eventJson.innerText = data;
+                            decryptBtn.remove();
+                        })
                 }
 
                 const event = document.createElement('li');
