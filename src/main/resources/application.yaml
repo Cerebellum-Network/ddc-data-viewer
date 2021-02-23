@@ -9,6 +9,8 @@ quarkus:
       network.cere:
         level: ${LOG_LEVEL:INFO}
   # Build section
+  native:
+    container-build: true
   package:
     type: 'native'
   container-image:
