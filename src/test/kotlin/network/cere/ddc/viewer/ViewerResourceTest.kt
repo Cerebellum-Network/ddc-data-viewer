@@ -36,8 +36,26 @@ internal class ViewerResourceTest {
     fun `Get data`() {
         // 1. Create app
         val appPubKey = "0x8f01969eb5244d853cc9c6ad73c46d8a1a091842c414cabd2377531f0832635f"
+        val appPrivKey = "0x38a538d3d890bfe8f76dc9bf578e215af16fd3d684666f72db0bc0a22bc1d05b"
+        val tierId = "1"
+        val appSignature = appPrivKey.removePrefix("0x")
+            .let(Hex::decode)
+            .let(::Ed25519Sign)
+            .sign("$appPubKey$tierId".toByteArray())
+            .let(Hex::encode)
+
         webClient.postAbs("$bootnode$API_PREFIX/apps")
-            .sendJsonObjectAndAwait(JsonObject("""{"appPubKey": "$appPubKey"}"""))
+            .sendJsonObjectAndAwait(
+                JsonObject(
+                    """
+                        {
+                            "appPubKey": "$appPubKey",
+                            "tierId": "$tierId",
+                            "signature": "$appSignature"
+                        }
+                    """.trimIndent()
+                )
+            )
 
         await atMost Duration.ofMinutes(1) until {
             webClient.getAbs("$bootnode$API_PREFIX/apps/$appPubKey").sendAndAwait().statusCode() == 200
@@ -77,7 +95,7 @@ internal class ViewerResourceTest {
 
     private fun searchTargetPartitionNode(piece: JsonObject): String {
         val crc = CRC32()
-        crc.update(piece.getString("id").toByteArray())
+        crc.update(piece.getString("userPubKey").toByteArray())
         val ringToken = crc.value
         return webClient.getAbs("$bootnode$API_PREFIX/apps/${piece.getString("appPubKey")}/topology")
             .sendAndAwait()
