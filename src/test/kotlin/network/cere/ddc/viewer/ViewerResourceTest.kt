@@ -42,7 +42,7 @@ internal class ViewerResourceTest {
             .sign("$appPubKey$tierId".toByteArray())
             .let(Hex::encode)
 
-        webClient.postAbs("$bootnode$API_PREFIX/apps")
+        val rs = webClient.postAbs("$bootnode$API_PREFIX/apps")
             .sendJsonObjectAndAwait(
                 JsonObject(
                     """
@@ -53,13 +53,8 @@ internal class ViewerResourceTest {
                         }
                     """.trimIndent()
                 )
-            )
-
-        await atMost Duration.ofMinutes(1) until {
-            val status = webClient.getAbs("$bootnode$API_PREFIX/apps/$appPubKey").sendAndAwait().statusCode()
-            println(status)
-            status == 200
-        }
+            ).statusCode()
+        assertEquals(200, rs)
 
         // 2. Submit data
         val signer = Ed25519Sign(appPrivKey)
