@@ -36,11 +36,9 @@ internal class ViewerResourceTest {
     fun `Get data`() {
         // 1. Create app
         val appPubKey = "0x8f01969eb5244d853cc9c6ad73c46d8a1a091842c414cabd2377531f0832635f"
-        val appPrivKey = "0x38a538d3d890bfe8f76dc9bf578e215af16fd3d684666f72db0bc0a22bc1d05b"
+        val appPrivKey = Hex.decode("38a538d3d890bfe8f76dc9bf578e215af16fd3d684666f72db0bc0a22bc1d05b")
         val tierId = "1"
-        val appSignature = appPrivKey.removePrefix("0x")
-            .let(Hex::decode)
-            .let(::Ed25519Sign)
+        val appSignature = Ed25519Sign(appPrivKey)
             .sign("$appPubKey$tierId".toByteArray())
             .let(Hex::encode)
 
@@ -57,17 +55,17 @@ internal class ViewerResourceTest {
                 )
             )
 
-        await atMost Duration.ofMinutes(1) until {
+        await atMost Duration.ofMinutes(2) until {
             webClient.getAbs("$bootnode$API_PREFIX/apps/$appPubKey").sendAndAwait().statusCode() == 200
         }
 
         // 2. Submit data
-        val signer = Ed25519Sign(Hex.decode("38a538d3d890bfe8f76dc9bf578e215af16fd3d684666f72db0bc0a22bc1d05b"))
+        val signer = Ed25519Sign(appPrivKey)
         val id = UUID.randomUUID().toString()
         val timestamp = Instant.now().toString()
         val userPubKey = "0x1"
         val data = "{}"
-        val signature = signer.sign("$id$timestamp$appPubKey$userPubKey$data".toByteArray()).let { Hex.encode(it) }
+        val signature = signer.sign("$id$timestamp$appPubKey$userPubKey$data".toByteArray()).let(Hex::encode)
         val piece = JsonObject(
             """
                     {
