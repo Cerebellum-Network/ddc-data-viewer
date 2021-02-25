@@ -55,8 +55,10 @@ internal class ViewerResourceTest {
                 )
             )
 
-        await atMost Duration.ofMinutes(2) until {
-            webClient.getAbs("$bootnode$API_PREFIX/apps/$appPubKey").sendAndAwait().statusCode() == 200
+        await atMost Duration.ofMinutes(1) until {
+            val status = webClient.getAbs("$bootnode$API_PREFIX/apps/$appPubKey").sendAndAwait().statusCode()
+            println(status)
+            status == 200
         }
 
         // 2. Submit data
