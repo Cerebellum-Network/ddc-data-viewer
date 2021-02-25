@@ -35,21 +35,36 @@ internal class ViewerResourceTest {
     @Test
     fun `Get data`() {
         // 1. Create app
-        val appPubKey = "0x8f01969eb5244d853cc9c6ad73c46d8a1a091842c414cabd2377531f0832635f"
-        webClient.postAbs("$bootnode$API_PREFIX/apps")
-            .sendJsonObjectAndAwait(JsonObject("""{"appPubKey": "$appPubKey"}"""))
+        val appPubKey = "0x07cc3fc4cd55db6944b12d2de2c80be06999d52c82986d51dc12098db1d07f3e"
+        val appPrivKey = Hex.decode("f71478a6c8ffe5f1bd6d1918dad0c9b05434e3d641bbc75da28d9b49893d2a2d")
+        val tierId = "1"
+        val appSignature = Ed25519Sign(appPrivKey)
+            .sign("$appPubKey$tierId".toByteArray())
+            .let(Hex::encode)
 
+        webClient.postAbs("$bootnode$API_PREFIX/apps")
+            .sendJsonObjectAndAwait(
+                JsonObject(
+                    """
+                        {
+                            "appPubKey": "$appPubKey",
+                            "tierId": "$tierId",
+                            "signature": "$appSignature"
+                        }
+                    """.trimIndent()
+                )
+            )
         await atMost Duration.ofMinutes(1) until {
             webClient.getAbs("$bootnode$API_PREFIX/apps/$appPubKey").sendAndAwait().statusCode() == 200
         }
 
         // 2. Submit data
-        val signer = Ed25519Sign(Hex.decode("38a538d3d890bfe8f76dc9bf578e215af16fd3d684666f72db0bc0a22bc1d05b"))
+        val signer = Ed25519Sign(appPrivKey)
         val id = UUID.randomUUID().toString()
         val timestamp = Instant.now().toString()
         val userPubKey = "0x1"
         val data = "{}"
-        val signature = signer.sign("$id$timestamp$appPubKey$userPubKey$data".toByteArray()).let { Hex.encode(it) }
+        val signature = signer.sign("$id$timestamp$appPubKey$userPubKey$data".toByteArray()).let(Hex::encode)
         val piece = JsonObject(
             """
                     {
@@ -77,7 +92,7 @@ internal class ViewerResourceTest {
 
     private fun searchTargetPartitionNode(piece: JsonObject): String {
         val crc = CRC32()
-        crc.update(piece.getString("id").toByteArray())
+        crc.update(piece.getString("userPubKey").toByteArray())
         val ringToken = crc.value
         return webClient.getAbs("$bootnode$API_PREFIX/apps/${piece.getString("appPubKey")}/topology")
             .sendAndAwait()
