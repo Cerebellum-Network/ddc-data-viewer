@@ -11,6 +11,7 @@ quarkus:
   # Build section
   native:
     container-build: true
+    enable-https-url-handler: true
   package:
     type: 'native'
   container-image:
